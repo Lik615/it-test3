@@ -2,176 +2,121 @@ package lostfound.ui;
 
 import lostfound.model.LostItem;
 import lostfound.model.FoundItem;
-import lostfound.service.LostFoundService;
+import lostfound.service.LostFoundManager;
 import java.util.List;
 import java.util.Scanner;
 
 /**
  * 校园失物招领管理系统 - 主程序
- * 提供基于控制台的交互式菜单界面
- *
  * @author 张子妍
- * @version 1.0
  */
 public class MainApplication {
 
-    private static LostFoundService service = new LostFoundService();
+    private static LostFoundManager manager = new LostFoundManager();
     private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        System.out.println("========================================");
-        System.out.println("    欢迎使用校园失物招领管理系统");
-        System.out.println("========================================");
+        System.out.println("===== 校园失物招领管理系统 =====");
         boolean running = true;
         while (running) {
-            printMainMenu();
-            int choice = readIntInput("请选择操作: ");
+            System.out.println("\n1.查看失物  2.查看拾物  3.登记失物");
+            System.out.println("4.登记拾物  5.搜索物品  6.智能匹配  7.统计  0.退出");
+            System.out.print("请选择: ");
+            int choice = readInt();
             switch (choice) {
-                case 1:
-                    showLostItemsMenu();
-                    break;
-                case 2:
-                    showFoundItemsMenu();
-                    break;
-                case 3:
-                    registerLostItem();
-                    break;
-                case 4:
-                    registerFoundItem();
-                    break;
-                case 5:
-                    searchItems();
-                    break;
-                case 6:
-                    service.autoMatch();
-                    break;
-                case 7:
-                    service.showStatistics();
-                    break;
-                case 0:
-                    running = false;
-                    System.out.println("感谢使用，再见!");
-                    break;
-                default:
-                    System.out.println("无效选择，请重新输入!");
-            }
-            if (running) {
-                System.out.println("\n按回车键继续...");
-                scanner.nextLine();
+                case 1: showLostItems(); break;
+                case 2: showFoundItems(); break;
+                case 3: registerLost(); break;
+                case 4: registerFound(); break;
+                case 5: searchItems(); break;
+                case 6: manager.autoMatch(); break;
+                case 7: manager.showStats(); break;
+                case 0: running = false; break;
+                default: System.out.println("无效选择!");
             }
         }
+        System.out.println("感谢使用，再见!");
         scanner.close();
     }
 
-    private static void printMainMenu() {
-        System.out.println("\n========== 主菜单 ==========");
-        System.out.println("1. 失物信息查询");
-        System.out.println("2. 拾物信息查询");
-        System.out.println("3. 登记失物信息");
-        System.out.println("4. 登记拾物信息");
-        System.out.println("5. 搜索物品");
-        System.out.println("6. 智能匹配失物与拾物");
-        System.out.println("7. 系统统计");
-        System.out.println("0. 退出系统");
-        System.out.println("============================");
-    }
+    // ==================== 失物相关 ====================
 
-    private static void showLostItemsMenu() {
-        System.out.println("\n========== 失物信息管理 ==========");
-        System.out.println("1. 查看所有失物");
-        System.out.println("2. 按编号查询");
-        System.out.println("3. 标记为已找到");
-        System.out.println("4. 删除失物记录");
-        System.out.println("0. 返回");
-        System.out.println("==================================");
-        int choice = readIntInput("请选择: ");
-        switch (choice) {
+    private static void showLostItems() {
+        List<LostItem> items = manager.getAllLostItems();
+        System.out.println("\n--- 失物列表 (" + items.size() + "条) ---");
+        for (LostItem i : items) {
+            System.out.println(i.toShortString());
+        }
+        System.out.println("\n1.按编号查询  2.标记已找到  0.返回");
+        System.out.print("请选择: ");
+        switch (readInt()) {
             case 1:
-                displayAllLostItems();
+                System.out.print("输入编号: ");
+                LostItem item = manager.findLostItemById(readInt());
+                System.out.println(item != null ? item.toString() : "未找到!");
                 break;
             case 2:
-                int id = readIntInput("输入失物编号: ");
-                LostItem item = service.findLostItemById(id);
-                if (item != null) System.out.println(item);
+                System.out.print("输入编号: ");
+                System.out.println(manager.markLostFound(readInt()) ? "已标记!" : "失败!");
                 break;
-            case 3:
-                int fid = readIntInput("输入失物编号: ");
-                service.markLostItemFound(fid);
-                break;
-            case 4:
-                int did = readIntInput("输入失物编号: ");
-                service.removeLostItem(did);
-                break;
-            case 0:
-                break;
-            default:
-                System.out.println("无效选择!");
         }
     }
 
-    private static void showFoundItemsMenu() {
-        System.out.println("\n========== 拾物信息管理 ==========");
-        System.out.println("1. 查看所有拾物");
-        System.out.println("2. 按编号查询");
-        System.out.println("3. 标记为已认领");
-        System.out.println("4. 删除拾物记录");
-        System.out.println("0. 返回");
-        System.out.println("==================================");
-        int choice = readIntInput("请选择: ");
-        switch (choice) {
+    // ==================== 拾物相关 ====================
+
+    private static void showFoundItems() {
+        List<FoundItem> items = manager.getAllFoundItems();
+        System.out.println("\n--- 拾物列表 (" + items.size() + "条) ---");
+        for (FoundItem i : items) {
+            System.out.println(i.toShortString());
+        }
+        System.out.println("\n1.按编号查询  2.标记已认领  0.返回");
+        System.out.print("请选择: ");
+        switch (readInt()) {
             case 1:
-                displayAllFoundItems();
+                System.out.print("输入编号: ");
+                FoundItem item = manager.findFoundItemById(readInt());
+                System.out.println(item != null ? item.toString() : "未找到!");
                 break;
             case 2:
-                int id = readIntInput("输入拾物编号: ");
-                FoundItem item = service.findFoundItemById(id);
-                if (item != null) System.out.println(item);
+                System.out.print("输入编号: ");
+                System.out.println(manager.markFoundClaimed(readInt()) ? "已标记!" : "失败!");
                 break;
-            case 3:
-                int fid = readIntInput("输入拾物编号: ");
-                service.markFoundItemClaimed(fid);
-                break;
-            case 4:
-                int did = readIntInput("输入拾物编号: ");
-                service.removeFoundItem(did);
-                break;
-            case 0:
-                break;
-            default:
-                System.out.println("无效选择!");
         }
     }
 
-    private static void registerLostItem() {
-        System.out.println("\n===== 登记失物信息 =====");
+    // ==================== 登记功能 ====================
+
+    private static void registerLost() {
+        System.out.println("\n===== 登记失物 =====");
         System.out.print("物品名称: ");
         String name = scanner.nextLine();
-        System.out.print("类别(证件/电子产品/生活用品/其他): ");
-        String category = scanner.nextLine();
-        System.out.print("详细描述: ");
+        System.out.print("类别: ");
+        String cat = scanner.nextLine();
+        System.out.print("描述: ");
         String desc = scanner.nextLine();
         System.out.print("丢失地点: ");
-        String location = scanner.nextLine();
-        System.out.print("丢失日期(yyyy-MM-dd): ");
+        String loc = scanner.nextLine();
+        System.out.print("丢失日期: ");
         String date = scanner.nextLine();
         System.out.print("联系人: ");
         String person = scanner.nextLine();
         System.out.print("联系电话: ");
         String phone = scanner.nextLine();
-        service.registerLostItem(name, category, desc, location, date, person, phone);
+        manager.addLostItem(new LostItem(name, cat, desc, loc, date, person, phone));
     }
 
-    private static void registerFoundItem() {
-        System.out.println("\n===== 登记拾物信息 =====");
+    private static void registerFound() {
+        System.out.println("\n===== 登记拾物 =====");
         System.out.print("物品名称: ");
         String name = scanner.nextLine();
-        System.out.print("类别(证件/电子产品/生活用品/其他): ");
-        String category = scanner.nextLine();
-        System.out.print("详细描述: ");
+        System.out.print("类别: ");
+        String cat = scanner.nextLine();
+        System.out.print("描述: ");
         String desc = scanner.nextLine();
         System.out.print("拾到地点: ");
-        String location = scanner.nextLine();
-        System.out.print("拾到日期(yyyy-MM-dd): ");
+        String loc = scanner.nextLine();
+        System.out.print("拾到日期: ");
         String date = scanner.nextLine();
         System.out.print("拾到人: ");
         String finder = scanner.nextLine();
@@ -179,79 +124,24 @@ public class MainApplication {
         String phone = scanner.nextLine();
         System.out.print("存放位置: ");
         String storage = scanner.nextLine();
-        service.registerFoundItem(name, category, desc, location, date, finder, phone, storage);
+        manager.addFoundItem(new FoundItem(name, cat, desc, loc, date, finder, phone, storage));
     }
+
+    // ==================== 搜索 ====================
 
     private static void searchItems() {
-        System.out.println("\n===== 搜索物品 =====");
-        System.out.print("输入搜索关键词: ");
-        String keyword = scanner.nextLine();
-        System.out.println("\n--- 失物匹配结果 ---");
-        List<LostItem> lostResults = service.searchLostItems(keyword);
-        if (!lostResults.isEmpty()) {
-            printLostHeader();
-            for (LostItem item : lostResults) {
-                System.out.println(item.toShortString());
-            }
-        }
-        System.out.println("\n--- 拾物匹配结果 ---");
-        List<FoundItem> foundResults = service.searchFoundItems(keyword);
-        if (!foundResults.isEmpty()) {
-            printFoundHeader();
-            for (FoundItem item : foundResults) {
-                System.out.println(item.toShortString());
-            }
-        }
+        System.out.print("\n输入关键词: ");
+        String kw = scanner.nextLine();
+        List<LostItem> lost = manager.searchLostItems(kw);
+        List<FoundItem> found = manager.searchFoundItems(kw);
+        System.out.println("\n失物匹配(" + lost.size() + "条):");
+        for (LostItem i : lost) System.out.println(i.toShortString());
+        System.out.println("\n拾物匹配(" + found.size() + "条):");
+        for (FoundItem i : found) System.out.println(i.toShortString());
     }
 
-    private static void displayAllLostItems() {
-        List<LostItem> items = service.getAllLostItems();
-        if (items.isEmpty()) {
-            System.out.println("暂无失物记录。");
-            return;
-        }
-        System.out.println("\n共 " + items.size() + " 条失物记录:");
-        printLostHeader();
-        for (LostItem item : items) {
-            System.out.println(item.toShortString());
-        }
-    }
-
-    private static void displayAllFoundItems() {
-        List<FoundItem> items = service.getAllFoundItems();
-        if (items.isEmpty()) {
-            System.out.println("暂无拾物记录。");
-            return;
-        }
-        System.out.println("\n共 " + items.size() + " 条拾物记录:");
-        printFoundHeader();
-        for (FoundItem item : items) {
-            System.out.println(item.toShortString());
-        }
-    }
-
-    private static void printLostHeader() {
-        System.out.println(String.format("%-6s %-12s %-8s %-16s %-10s %-12s %-8s",
-            "编号", "物品名称", "类别", "丢失地点", "丢失时间", "联系人", "状态"));
-        System.out.println("------------------------------------------------"
-            + "------------------------------");
-    }
-
-    private static void printFoundHeader() {
-        System.out.println(String.format("%-6s %-12s %-8s %-16s %-10s %-10s %-8s",
-            "编号", "物品名称", "类别", "拾到地点", "拾到时间", "拾到人", "状态"));
-        System.out.println("------------------------------------------------"
-            + "------------------------------");
-    }
-
-    private static int readIntInput(String prompt) {
-        while (true) {
-            System.out.print(prompt);
-            try {
-                return Integer.parseInt(scanner.nextLine().trim());
-            } catch (NumberFormatException e) {
-                System.out.println("请输入有效数字!");
-            }
-        }
+    private static int readInt() {
+        try { return Integer.parseInt(scanner.nextLine().trim()); }
+        catch (NumberFormatException e) { return -1; }
     }
 }
